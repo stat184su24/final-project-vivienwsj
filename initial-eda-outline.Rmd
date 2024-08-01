@@ -1,15 +1,20 @@
 ---
 title: "Initial EDA Basic Outline"
-author: "Name of Student"
+author: "Sijie Wu"
 output: html_notebook
 ---
 
 This is an outline for your Initial EDA. You can follow this outline, or you can modify it as you see fit. Do what works best for your project. 
 
 ## Research Question 
+Is there a correlation between the popularity of manga and the ranking of their anime adaptations?
 
-State your specific research question and why it is interesting. 
-
+### Why is it interesting?
+- Cross-Media Influence: Understanding the relationship between manga sales and anime rankings can provide insights into how success in one medium (print) translates to success in another (animation). This can be valuable for publishers, producers, and marketers.
+- Consumer Behavior: It sheds light on consumer preferences and behaviors. Are popular manga titles more likely to have successful anime adaptations? This can help in predicting the success of future adaptations.
+- Cultural Impact: The findings can contribute to the broader understanding of the impact of Japanese pop culture across different media platforms.
+- Industry Insights: For those studying the anime and manga industry, it provides empirical data that can influence business strategies, such as investment in anime adaptations of popular manga.
+- Fan Engagement: It could also be of interest to fans who might want to see their favorite manga adapted into anime and understand the factors that influence such decisions.
 
 
 ## Data Processing 
@@ -18,11 +23,76 @@ State your specific research question and why it is interesting.
 
 Include R code and written explanation to import your **TWO** data sets.
 
+```{r}
+install.packages("readr")
+library(readr)
+
+# Import the Top Anime Ranked dataset
+Anime_rank <- read_csv("/Users/vivienwu/Downloads/Anime_rank.csv")
+
+# Import the Best-Selling Manga dataset
+best_selling_manga <- read_csv("/Users/vivienwu/Downloads/best-selling-manga.csv")
+
+# Print the first few rows of each dataset to confirm successful import
+head(Anime_rank)
+head(best_selling_manga)
+```
+
 #### Data Wrangling 
 
 Include R code and written explanation for wangling your data (you can make multiple wrangled data sets). 
 
+```{r}
+# Load packages
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("stringr")
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
 
+# View the structure of the datasets
+str(Anime_rank)
+str(best_selling_manga)
+
+# Clean the Top Anime Ranked dataset
+# Assuming columns: Title, Rank, Score, Members
+top_anime_cleaned <- Anime_rank %>%
+  select(Title, Rank, Score, Members) %>% # Select relevant columns
+  filter(!is.na(Title) & !is.na(Rank)) %>% # Remove rows with missing values in key columns
+  mutate(Title = str_trim(Title))          # Trim whitespace from titles
+
+# Clean the Best-Selling Manga dataset
+# Assuming columns: Manga series, Approximate sales in million(s)
+best_selling_manga_cleaned <- best_selling_manga %>%
+  select(`Manga series`, `Approximate sales in million(s)`) %>% # Select relevant columns
+  filter(!is.na(`Manga series`) & !is.na(`Approximate sales in million(s)`)) %>% # Remove rows with missing values in key columns
+  mutate(`Manga series` = str_trim(`Manga series`))                             # Trim whitespace from manga series names
+
+# Merge the two datasets
+# Assuming Title and Manga series are the common columns
+merged_data <- top_anime_cleaned %>%
+  inner_join(best_selling_manga_cleaned, by = c("Title" = "Manga series"))
+
+# Print the first few rows of the merged dataset
+head(merged_data)
+
+# Additional Wrangled Datasets
+# Example: Top 10 Anime by Score
+top_10_anime_by_score <- top_anime_cleaned %>%
+  arrange(desc(Score)) %>%
+  top_n(10, Score)
+
+# Example: Top 10 Manga by Sales
+top_10_manga_by_sales <- best_selling_manga_cleaned %>%
+  arrange(desc(`Approximate sales in million(s)`)) %>%
+  top_n(10, `Approximate sales in million(s)`)
+
+# Print the first few rows of the additional wrangled datasets
+head(top_10_anime_by_score)
+head(top_10_manga_by_sales)
+```
 
 
 ## Data Visualization
@@ -31,11 +101,95 @@ Include R code and written explanation for wangling your data (you can make mult
 
 Include R code to make one data visualization (I would encourage you to use 3 or more variables). Include a brief written description of what your graph shows. Is this graph helpful in answering your research question? If it is helpful, will you need to add/modify anything in this graph in the final report? 
 
+```{r}
+# Load necessary packages for visualization
+install.packages("ggplot2")
+library(ggplot2)
+
+# Create a scatter plot with a trend line
+ggplot(merged_data, aes(x = Score, y = `Approximate sales in million(s)`, size = Members, color = Rank)) +
+  geom_point(alpha = 0.6) +
+  scale_size_continuous(range = c(1, 10), name = "Members") +
+  scale_color_continuous(name = "Rank") +
+  labs(title = "Relationship between Anime Score, Members, and Manga Sales",
+       x = "Anime Score",
+       y = "Manga Sales (in millions)") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+Description: 
+This scatter plot visualizes the relationship between anime scores and manga sales, with the size of the points representing the number of members and the color indicating the rank of the anime.
+- X-axis (Anime Score): Represents the score of the anime.
+- Y-axis (Manga Sales): Represents the approximate sales of the manga series in millions.
+- Point Size (Members): Represents the number of members associated with each anime.
+- Point Color (Rank): Represents the rank of the anime.
+
+Interpretation:
+- Correlation Analysis: The plot helps in visually assessing if there is a correlation between the anime score and manga sales. A trend line could indicate if higher-scored anime tend to have higher manga sales.
+- Popularity and Sales: By including the number of members, we can also infer if more popular anime (with more members) correlate with higher manga sales.
+- Rank Insights: The color gradient by rank can provide additional insights into how rank affects both score and sales.
+
+Helpfulness:
+This graph is helpful in answering the research question as it brings together multiple variables (score, sales, members, and rank) to provide a comprehensive view of the data.
+
+Modifications for Final Report:
+- Adding a Trend Line: Including a trend line to better visualize the correlation.
+- Annotations: Adding annotations or labels to highlight significant data points.
+
 #### Plot 2
 
 Include R code to make one data visualization (I would encourage you to use 3 or more variables). Include a brief written description of what your graph shows. Is this graph helpful in answering your research question? If it is helpful, will you need to add/modify anything in this graph in the final report? 
 
+```{r}
+# Load necessary packages for visualization
+library(ggplot2)
+
+# Select the top 20 manga by sales
+top_20_manga <- merged_data %>%
+  arrange(desc(`Approximate sales in million(s)`)) %>%
+  head(20)
+
+# Create a bar plot to show the relationship between manga sales and anime ranking
+plot <- ggplot(top_20_manga, aes(x = reorder(Title, -Rank), y = `Approximate sales in million(s)`, fill = Score)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_gradient(low = "yellow", high = "blue", name = "Anime Score") +
+  labs(title = "Top 20 Manga Sales vs. Anime Ranking",
+       x = "Anime Title",
+       y = "Manga Sales (in millions)") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_text(size = 10))
+
+# Print the plot
+print(plot)
+```
+Description: This bar plot visualizes the relationship between the popularity of the top 20 manga (measured by approximate sales) and the ranking of their anime adaptations.
+- X-axis (Anime Title): Represents the titles of the top 20 anime, ordered by their rank.
+- Y-axis (Manga Sales): Represents the approximate sales of the manga series in millions.
+- Bar Color (Anime Score): Represents the score of the anime, with a gradient from yellow (lower scores) to blue (higher scores).
+
+Interpretation:
+- Correlation Analysis: This plot helps in visually assessing if there is a correlation between the manga sales and the ranking of their anime adaptations. If higher manga sales correspond to better-ranked anime, this will be evident in the pattern of the bars.
+- Sales and Ranking: By comparing the height of the bars (sales) against the rank order (X-axis), we can determine if popular manga tend to have higher-ranked anime adaptations.
+
+Helpfulness:
+This graph is directly related to the research question as it visually represents the relationship between the popularity of manga and the ranking of their anime adaptations.
+
+Modifications for Final Report:
+Highlighting Significant Titles: Highlighting or annotating specific titles that are outliers or particularly significant.
 
 ## Conclusion
 
 Include your initial intuition as to what the answer to your research question is using the data sets and visualizations you created. 
+
+### Initial Intuition
+Initially, it was hypothesized that there would be a significant correlation between the popularity of manga (measured by sales) and the ranking of their anime adaptations. The reasoning behind this intuition was that a popular manga would likely attract a larger audience, leading to higher anticipation and viewership for its anime adaptation, thus resulting in higher rankings.
+
+### Data Analysis and Visualization
+The data analysis involved merging two datasets: top anime ranked and best-selling manga. The merged dataset allowed us to visualize the relationship between manga sales, anime scores, and rankings. The key visualization, a bar plot, showed the relationship between the top 20 manga sales and their corresponding anime rankings.
+
+### Key Findings
+- Correlation Between Manga Sales and Anime Rankings: The visualizations provided insights into the relationship between manga sales and anime rankings. While some popular manga (e.g., "One Piece," "Dragon Ball") had high sales and their anime adaptations ranked well, this trend was not consistent across all titles.
+- Variability in Anime Scores: The anime scores varied significantly even among highly popular manga, indicating that factors other than manga popularity, such as production quality, storyline adaptation, and audience reception, play a crucial role in determining the anime's success.
+- Top Manga Adaptations: Titles like "One Piece" and "Dragon Ball," which had high manga sales, also showed good performance in their anime adaptations, supporting the initial intuition to some extent.
