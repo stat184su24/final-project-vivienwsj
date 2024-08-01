@@ -23,6 +23,30 @@ Is there a correlation between the popularity of manga and the ranking of their 
 
 Include R code and written explanation to import your **TWO** data sets.
 
+### Origin and Purpose of Data
+
+#### Anime Rank Dataset:
+- Origin: This dataset was collected from kaggle.
+- Purpose: It includes information about the highest-ranked anime, including scores, member counts, and rankings.
+
+#### Best-Selling Manga Dataset:
+- Origin: This dataset was collected from kaggle.
+- Purpose: It lists the best-selling manga series, including approximate sales, number of volumes, and authors.
+
+### Investigate and Explain Key Variables:
+#### Top Anime Ranked Dataset:
+- Title: Name of the anime.
+- Rank: Position in the ranking.
+- Score: Average score given by users.
+- Members: Number of members who have interacted with the anime.
+
+#### Best-Selling Manga Dataset:
+- Manga Series: Name of the manga.
+- Approximate Sales: Sales figures in millions.
+- Volumes: Number of volumes.
+- Author: Author of the manga.
+
+
 ```{r}
 install.packages("readr")
 library(readr)
@@ -57,34 +81,31 @@ str(Anime_rank)
 str(best_selling_manga)
 
 # Clean the Top Anime Ranked dataset
-# Assuming columns: Title, Rank, Score, Members
 top_anime_cleaned <- Anime_rank %>%
   select(Title, Rank, Score, Members) %>% # Select relevant columns
   filter(!is.na(Title) & !is.na(Rank)) %>% # Remove rows with missing values in key columns
   mutate(Title = str_trim(Title))          # Trim whitespace from titles
 
 # Clean the Best-Selling Manga dataset
-# Assuming columns: Manga series, Approximate sales in million(s)
 best_selling_manga_cleaned <- best_selling_manga %>%
   select(`Manga series`, `Approximate sales in million(s)`) %>% # Select relevant columns
   filter(!is.na(`Manga series`) & !is.na(`Approximate sales in million(s)`)) %>% # Remove rows with missing values in key columns
-  mutate(`Manga series` = str_trim(`Manga series`))                             # Trim whitespace from manga series names
+  mutate(`Manga series` = str_trim(`Manga series`))                             
+# Trim whitespace from manga series names
 
 # Merge the two datasets
-# Assuming Title and Manga series are the common columns
 merged_data <- top_anime_cleaned %>%
   inner_join(best_selling_manga_cleaned, by = c("Title" = "Manga series"))
 
 # Print the first few rows of the merged dataset
 head(merged_data)
 
-# Additional Wrangled Datasets
-# Example: Top 10 Anime by Score
+# Wrangled Datasets
 top_10_anime_by_score <- top_anime_cleaned %>%
   arrange(desc(Score)) %>%
   top_n(10, Score)
 
-# Example: Top 10 Manga by Sales
+# Top 10 Manga by Sales
 top_10_manga_by_sales <- best_selling_manga_cleaned %>%
   arrange(desc(`Approximate sales in million(s)`)) %>%
   top_n(10, `Approximate sales in million(s)`)
@@ -181,7 +202,7 @@ Highlighting Significant Titles: Highlighting or annotating specific titles that
 
 ## Conclusion
 
-Include your initial intuition as to what the answer to your research question is using the data sets and visualizations you created. 
+The analysis suggests that while there is some correlation between the popularity of manga and the ranking of their anime adaptations, it is not a definitive predictor. High manga sales do not always guarantee a high-ranking anime adaptation. Other factors, such as production quality, fidelity to the source material, and audience reception, significantly influence the success of an anime.
 
 ### Initial Intuition
 Initially, it was hypothesized that there would be a significant correlation between the popularity of manga (measured by sales) and the ranking of their anime adaptations. The reasoning behind this intuition was that a popular manga would likely attract a larger audience, leading to higher anticipation and viewership for its anime adaptation, thus resulting in higher rankings.
@@ -193,3 +214,8 @@ The data analysis involved merging two datasets: top anime ranked and best-selli
 - Correlation Between Manga Sales and Anime Rankings: The visualizations provided insights into the relationship between manga sales and anime rankings. While some popular manga (e.g., "One Piece," "Dragon Ball") had high sales and their anime adaptations ranked well, this trend was not consistent across all titles.
 - Variability in Anime Scores: The anime scores varied significantly even among highly popular manga, indicating that factors other than manga popularity, such as production quality, storyline adaptation, and audience reception, play a crucial role in determining the anime's success.
 - Top Manga Adaptations: Titles like "One Piece" and "Dragon Ball," which had high manga sales, also showed good performance in their anime adaptations, supporting the initial intuition to some extent.
+
+### Future Consideration
+- Detailed Genre Analysis: Examining if certain genres show a stronger correlation between manga popularity and anime success.
+- Production Factors: Investigating the impact of production studios, directors, and voice actors on the anime's success.
+- Audience Demographics: Analyzing how different audience demographics (age, region) influence the reception of anime adaptations.
