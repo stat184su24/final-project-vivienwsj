@@ -1,35 +1,139 @@
 ---
-title: "Final Project Basic Outline"
-author: "Student name"
+title: "Final Project"
+author: "Sijie Wu"
 output: html_notebook
 ---
 
-This is an outline for your final project. You can follow this outline, or you can modify it as you see fit. Do what works best for your project. 
+## Research Question and Dataset Introduction
 
-## Research Question 
+The research question driving this analysis is: "Is there a correlation between the popularity of manga and the ranking of their anime adaptations?" To explore this, we utilized two comprehensive datasets sourced from Kaggle. The first dataset, Top Anime Ranked, is derived from MyAnimeList.net, a prominent platform for anime enthusiasts. This dataset encompasses a wide range of information, including unique identifiers (UID), titles, rankings, stream types, episodes, start and end dates, member counts, and user scores. It offers a detailed view of anime popularity, duration, and user ratings, making it a valuable resource for statistical analysis, machine learning applications, and trend exploration in anime viewership.
 
-State your general specific question and why it is interesting. 
-
-
+The second dataset, Best-Selling Manga, lists the most successful Japanese manga series based on the number of collected tankōbon volumes sold. This dataset includes manga series with at least 20 million copies in circulation, providing a reliable measure of their popularity. The data is organized by the highest circulation estimates recorded from credible sources, ensuring accurate representation of manga sales. By analyzing these datasets, we aim to uncover patterns and correlations between the success of manga and the performance of their corresponding anime adaptations, providing insights into the factors that contribute to the popularity of these media forms.
 
 ## Data Processing 
 
 #### Data Intake 
 
-Include R code and a written explanation to import your **TWO** data sets.
+```{r}
+library(readr)
+
+# Import the Top Anime Ranked dataset
+Anime_rank <- read_csv("/Users/vivienwu/Downloads/Anime_rank.csv")
+
+# Import the Best-Selling Manga dataset
+best_selling_manga <- read_csv("/Users/vivienwu/Downloads/best-selling-manga.csv")
+
+# Print the first few rows of each dataset to confirm successful import
+head(Anime_rank)
+head(best_selling_manga)
+```
+
 
 #### Data Wrangling 
 
-Include R code and written explanation for wangling your data (you can make multiple wrangled data sets). 
+The data wrangling process involved several key steps to prepare the datasets for analysis and visualization.
+```{r}
+# Load packages
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
 
+# View the structure of the datasets
+str(Anime_rank)
+str(best_selling_manga)
 
+# Clean the Top Anime Ranked dataset
+top_anime_cleaned <- Anime_rank %>%
+  select(Title, Rank, Score, Members) %>% # Select relevant columns
+  filter(!is.na(Title) & !is.na(Rank)) %>% # Remove rows with missing values in key columns
+  mutate(Title = str_trim(Title))          # Trim whitespace from titles
 
+# Clean the Best-Selling Manga dataset
+best_selling_manga_cleaned <- best_selling_manga %>%
+  select(`Manga series`, `Approximate sales in million(s)`) %>% # Select relevant columns
+  filter(!is.na(`Manga series`) & !is.na(`Approximate sales in million(s)`)) %>% # Remove rows with missing values in key columns
+  mutate(`Manga series` = str_trim(`Manga series`))                             
+# Trim whitespace from manga series names
+
+# Merge the two datasets
+merged_data <- top_anime_cleaned %>%
+  inner_join(best_selling_manga_cleaned, by = c("Title" = "Manga series"))
+
+# Print the first few rows of the merged dataset
+head(merged_data)
+
+# Wrangled Datasets
+top_50_anime_by_score <- top_anime_cleaned %>%
+  arrange(desc(Score)) %>%
+  top_n(50, Score)
+
+# Top 50 Manga by Sales
+top_50_manga_by_sales <- best_selling_manga_cleaned %>%
+  arrange(desc(`Approximate sales in million(s)`)) %>%
+  top_n(50, `Approximate sales in million(s)`)
+
+# Print the first few rows of the additional wrangled datasets
+head(top_50_anime_by_score)
+head(top_50_manga_by_sales)
+```
+The cleaned and merged datasets allowed for effective visualization and analysis to explore the relationship between the popularity of manga and the ranking of their anime adaptations.
 
 ## Data Visualization
 
-Include R code and written explanation for your data visualization(s) with at least 3 variables. You must have **at least** one graph. You may have more than one (I would encourage you to have more than one). 
+nclude R code and written explanation for your data visualization(s) with at least 3 variables. You must have **at least** one graph. You may have more than one (I Iwould encourage you to have more than one). 
+
+```{r}
+library(ggplot2)
+
+# Create a scatter plot with a regression line
+plot1 <- ggplot(merged_data, aes(x = Score, y = `Approximate sales in million(s)`, size = Members, color = Rank)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dashed") +
+  scale_size_continuous(range = c(1, 10), name = "Members") +
+  scale_color_gradient(low = "yellow", high = "red", name = "Rank") +
+  labs(title = "Relationship between Anime Score, Members, and Manga Sales",
+       x = "Anime Score",
+       y = "Manga Sales (in millions)") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# Print the plot
+print(plot1)
+```
+This bar plot visualizes the relationship between the popularity of the top 20 manga (measured by approximate sales) and the ranking of their anime adaptations. This visualization helps in understanding the overall relationship between anime scores, manga sales, and the number of members. The trend line provides a visual cue for any existing correlation.
+
+- X-axis (Anime Title): Represents the titles of the top 20 anime, ordered by their rank.
+- Y-axis (Manga Sales): Represents the approximate sales of the manga series in millions.
+- Bar Color (Anime Score): Represents the score of the anime, with a gradient from yellow (lower scores) to blue (higher scores).
 
 
+```{r}
+# Select the top 20 manga by sales
+top_20_manga <- merged_data %>%
+  arrange(desc(`Approximate sales in million(s)`)) %>%
+  head(20)
+
+# Create a bar plot to show the relationship between manga sales and anime ranking
+plot2 <- ggplot(top_20_manga, aes(x = reorder(Title, -Rank), y = `Approximate sales in million(s)`, fill = Score)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_gradient(low = "yellow", high = "blue", name = "Anime Score") +
+  labs(title = "Top 20 Manga Sales vs. Anime Ranking",
+       x = "Anime Title",
+       y = "Manga Sales (in millions)") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_text(size = 10))
+
+# Print the plot
+print(plot2)
+```
+This bar plot visualizes the relationship between the popularity of the top 20 manga (measured by approximate sales) and the ranking of their anime adaptations. By focusing on the top 20 manga, this plot highlights specific cases where high manga sales correlate with high anime rankings, making it easier to identify patterns and outliers.
+
+- X-axis (Anime Title): Represents the titles of the top 20 anime, ordered by their rank.
+- Y-axis (Manga Sales): Represents the approximate sales of the manga series in millions.
+- Bar Color (Anime Score): Represents the score of the anime, with a gradient from yellow (lower scores) to blue (higher scores).
 
 
 ## Conclusion
