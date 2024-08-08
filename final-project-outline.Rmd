@@ -1,12 +1,13 @@
 ---
-title: "Final Project"
+title: "Final Project: Is there a correlation between the popularity of manga and the ranking of their anime adaptations?"
 author: "Sijie Wu"
+date: "Aug 7, 2024"
 output: html_notebook
 ---
 
 ## Research Question and Dataset Introduction
 
-The research question driving this analysis is: "Is there a correlation between the popularity of manga and the ranking of their anime adaptations?" To explore this, we utilized two comprehensive datasets sourced from Kaggle. The first dataset, Top Anime Ranked, is derived from MyAnimeList.net, a prominent platform for anime enthusiasts. This dataset encompasses a wide range of information, including unique identifiers (UID), titles, rankings, stream types, episodes, start and end dates, member counts, and user scores. It offers a detailed view of anime popularity, duration, and user ratings, making it a valuable resource for statistical analysis, machine learning applications, and trend exploration in anime viewership.
+The research question driving this analysis is: **"Is there a correlation between the popularity of manga and the ranking of their anime adaptations?"** To explore this, we utilized two comprehensive datasets sourced from Kaggle. The first dataset, Top Anime Ranked, is derived from MyAnimeList.net, a prominent platform for anime enthusiasts. This dataset encompasses a wide range of information, including unique identifiers (UID), titles, rankings, stream types, episodes, start and end dates, member counts, and user scores. It offers a detailed view of anime popularity, duration, and user ratings, making it a valuable resource for statistical analysis, machine learning applications, and trend exploration in anime viewership.
 
 The second dataset, Best-Selling Manga, lists the most successful Japanese manga series based on the number of collected tankōbon volumes sold. This dataset includes manga series with at least 20 million copies in circulation, providing a reliable measure of their popularity. The data is organized by the highest circulation estimates recorded from credible sources, ensuring accurate representation of manga sales. By analyzing these datasets, we aim to uncover patterns and correlations between the success of manga and the performance of their corresponding anime adaptations, providing insights into the factors that contribute to the popularity of these media forms.
 
@@ -77,12 +78,50 @@ top_50_manga_by_sales <- best_selling_manga_cleaned %>%
 head(top_50_anime_by_score)
 head(top_50_manga_by_sales)
 ```
-The data wrangling process involved several key steps to prepare and clean the datasets for analysis. We began by loading the necessary packages (dplyr, tidyr, readr, and stringr) for data manipulation and importing. The structure of the datasets Anime_rank and best_selling_manga was inspected to understand their data types and arrangement. For the Top Anime Ranked dataset, we selected relevant columns (Title, Rank, Score, Members), removed rows with missing values in key columns, and trimmed whitespace from the Title column. Similarly, for the Best-Selling Manga dataset, we selected relevant columns (Manga series, Approximate sales in million(s)), removed rows with missing values, and trimmed whitespace from the Manga series column. The cleaned datasets were then merged using an inner join on the Title and Manga series columns, combining the datasets based on matching titles. Additionally, we created two wrangled datasets: the top 50 anime by score and the top 50 manga by sales, by arranging the data in descending order of scores and sales, respectively, and selecting the top entries. Finally, we printed the first few rows of the merged and additional wrangled datasets to verify the success of the cleaning and merging operations. This comprehensive data wrangling process ensured that the datasets were clean, standardized, and ready for analysis, providing a structured foundation for exploring the correlation between manga popularity and the ranking of their anime adaptations.
 The cleaned and merged datasets allowed for effective visualization and analysis to explore the relationship between the popularity of manga and the ranking of their anime adaptations.
 
-## Data Visualization
+```{r}
+# Boxplot for anime scores
+ggplot(top_anime_cleaned, aes(x = "", y = Score)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Anime Scores",
+       y = "Score")
 
-nclude R code and written explanation for your data visualization(s) with at least 3 variables. You must have **at least** one graph. You may have more than one (I Iwould encourage you to have more than one). 
+# Boxplot for manga sales
+ggplot(best_selling_manga_cleaned, aes(x = "", y = `Approximate sales in million(s)`)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Manga Sales",
+       y = "Manga Sales (in millions)")
+
+# Boxplot for number of members
+ggplot(top_anime_cleaned, aes(x = "", y = Members)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Number of Members",
+       y = "Number of Members")
+
+# Identify outliers in anime scores
+anime_score_outliers <- top_anime_cleaned %>%
+  filter(Score < quantile(Score, 0.25) - 1.5 * IQR(Score) | Score > quantile(Score, 0.75) + 1.5 * IQR(Score))
+
+# Identify outliers in manga sales
+manga_sales_outliers <- best_selling_manga_cleaned %>%
+  filter(`Approximate sales in million(s)` < quantile(`Approximate sales in million(s)`, 0.25) - 1.5 * IQR(`Approximate sales in million(s)`) | 
+         `Approximate sales in million(s)` > quantile(`Approximate sales in million(s)`, 0.75) + 1.5 * IQR(`Approximate sales in million(s)`))
+
+# Identify outliers in number of members
+members_outliers <- top_anime_cleaned %>%
+  filter(Members < quantile(Members, 0.25) - 1.5 * IQR(Members) | Members > quantile(Members, 0.75) + 1.5 * IQR(Members))
+
+# Print outliers
+anime_score_outliers
+manga_sales_outliers
+members_outliers
+```
+The data wrangling process involved several key steps to prepare and clean the datasets for analysis. We began by loading the necessary packages (dplyr, tidyr, readr, and stringr) for data manipulation and importing. The structure of the datasets Anime_rank and best_selling_manga was inspected to understand their data types and arrangement. For the Top Anime Ranked dataset, we selected relevant columns (Title, Rank, Score, Members), removed rows with missing values in key columns, and trimmed whitespace from the Title column. Similarly, for the Best-Selling Manga dataset, we selected relevant columns (Manga series, Approximate sales in million(s)), removed rows with missing values, and trimmed whitespace from the Manga series column. The cleaned datasets were then merged using an inner join on the Title and Manga series columns, combining the datasets based on matching titles. Additionally, we created two wrangled datasets: the top 50 anime by score and the top 50 manga by sales, by arranging the data in descending order of scores and sales, respectively, and selecting the top entries.
+
+Following the data wrangling, we conducted an outlier analysis on key variables—anime scores, manga sales, and the number of members. Using boxplots, we identified outliers that represented data points significantly deviating from the rest of the dataset. Outliers in anime scores indicated variability in audience reception, with some anime receiving exceptionally high or low ratings. For manga sales, high outliers reflected the exceptional popularity of certain series, which could skew the analysis due to their significant influence. Outliers in the number of members highlighted anime with substantial fan bases, potentially affecting the correlation analysis. By accounting for these outliers, we ensured a more accurate understanding of the relationship between manga popularity and anime rankings, providing a robust foundation for our analysis.
+
+## Data Visualization
 
 ```{r}
 library(ggplot2)
@@ -138,4 +177,12 @@ This bar plot visualizes the relationship between the popularity of the top 20 m
 
 ## Conclusion
 
-Our analysis sought to answer the research question: "Is there a correlation between the popularity of manga and the ranking of their anime adaptations?" Using comprehensive datasets from Kaggle, we examined the top-ranked anime and best-selling manga series, focusing on key variables such as anime scores, member counts, and manga sales. The scatter plot visualizing the relationship between anime scores, manga sales, and member counts suggested a positive correlation, with higher manga sales generally corresponding to higher anime scores, and popular anime (with more members) often having higher sales figures. Additionally, the bar plot focusing on the top 20 manga by sales and their corresponding anime rankings provided a more nuanced view, indicating that while several top-selling manga had high-ranking anime adaptations, this trend was not uniform. Some high-selling manga had anime adaptations that did not perform as well in rankings. From our initial intuition and the visualizations, we observe a trend where popular manga tend to have successful anime adaptations. However, the correlation is not absolute; high manga sales do not always guarantee a top-ranked anime adaptation. Factors such as production quality, fidelity to the source material, and audience reception significantly influence the success of an anime adaptation. In conclusion, while there is some correlation between manga popularity and anime rankings, it is not a definitive predictor. The success of an anime adaptation is multifaceted, and manga popularity is just one of many contributing factors. Our findings highlight the complexity of the relationship between manga sales and anime success, suggesting that future research could delve deeper into other influential factors to provide a more comprehensive understanding.
+Our analysis sought to answer the research question: **"Is there a correlation between the popularity of manga and the ranking of their anime adaptations?"** Using comprehensive datasets from Kaggle, we examined the top-ranked anime and best-selling manga series, focusing on key variables such as anime scores, member counts, and manga sales.
+
+The scatter plot visualizing the relationship between anime scores, manga sales, and member counts suggested a positive correlation. Higher manga sales generally corresponded to higher anime scores, and popular anime (with more members) often had higher sales figures. For instance, in the first ggplot graph, anime titles with high member counts and high scores, such as "One Piece," demonstrated significant manga sales, reinforcing the observed trend.
+
+Additionally, the bar plot focusing on the top 20 manga by sales and their corresponding anime rankings provided a more nuanced view, indicating that while several top-selling manga had high-ranking anime adaptations, this trend was not uniform. From the second ggplot graph, we can see that the best-selling manga "One Piece" is also among the top 3 in anime rankings, illustrating a case where high manga sales coincide with a high-ranking anime adaptation. However, this trend was not consistent across all titles. Some high-selling manga had anime adaptations that did not perform as well in rankings.
+
+From our initial intuition and the visualizations, we observe a trend where popular manga tend to have successful anime adaptations. However, the correlation is not absolute; high manga sales do not always guarantee a top-ranked anime adaptation. Factors such as production quality, fidelity to the source material, and audience reception significantly influence the success of an anime adaptation.
+
+In conclusion, while there is some correlation between manga popularity and anime rankings, it is not a definitive predictor. The success of an anime adaptation is multifaceted, and manga popularity is just one of many contributing factors. Our findings highlight the complexity of the relationship between manga sales and anime success, suggesting that future research could delve deeper into other influential factors to provide a more comprehensive understanding.
